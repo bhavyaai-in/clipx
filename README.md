@@ -186,6 +186,121 @@ You can assign these shortcuts to **Back Tap** (Settings → Accessibility → T
 - Double Tap → Push
 - Triple Tap → Pull
 
+## Windows Setup (AutoHotkey)
+
+Download and install [AutoHotkey v2](https://www.autohotkey.com/download/).
+
+Create a new script (`clipx.ahk`), right-click it and choose **Edit Script**, then paste:
+
+```autohotkey
+if not A_IsAdmin
+{
+   Run "*RunAs" A_ScriptFullPath
+   ExitApp
+}
+
+#Requires AutoHotkey v2.0
+#SingleInstance Force
+
+; Configuration
+global SECRET := "your-device-id-from-admin-panel"
+global URL := "https://your-domain.com/v1/clips"
+
+; ---------------------------------------------------------
+; PUSH: Shift + Alt + ;
+; ---------------------------------------------------------
++!;:: {
+    A_Clipboard := ""
+    Send("^c")
+    if !ClipWait(2) {
+        return
+    }
+
+    try {
+        whr := ComObject("WinHttp.WinHttpRequest.5.1")
+        whr.Open("POST", URL, true)
+        whr.SetRequestHeader("X-Device-Secret", SECRET)
+        whr.SetRequestHeader("Content-Type", "application/json; charset=utf-8")
+
+        body := '{"content":' . JSON_Stringify(A_Clipboard) . '}'
+        whr.Send(body)
+        whr.WaitForResponse()
+
+        TrayTip "↗️ Uploaded to ClipX", "Success", 1
+    } catch Error as e {
+        ; Silent fail
+    }
+}
+
+; ---------------------------------------------------------
+; PULL: Shift + Alt + '
+; ---------------------------------------------------------
++!':: {
+    try {
+        whr := ComObject("WinHttp.WinHttpRequest.5.1")
+        whr.Open("GET", URL . "?limit=1", true)
+        whr.SetRequestHeader("X-Device-Secret", SECRET)
+        whr.Send()
+        whr.WaitForResponse()
+
+        if (whr.Status == 200) {
+            response := whr.ResponseText
+
+            ; --- MODERN JSON PARSE (No Window, No Emoji Break) ---
+            html := ComObject("htmlfile")
+            html.write('<meta http-equiv="X-UA-Compatible" content="IE=9">')
+            js := html.parentWindow
+            js.execScript("function parseJSON(s) { return JSON.parse(s)[0].content; }")
+
+            finalText := js.parseJSON(response)
+
+            if (finalText != "") {
+                A_Clipboard := ""
+                A_Clipboard := finalText
+
+                if ClipWait(2) {
+                    Sleep(500)
+                    Send("^v")
+                    TrayTip "↙️ Pulled & Pasted", "ClipX", 1
+                }
+            }
+        }
+    } catch Error as e {
+        ; Fallback: manual clean if above fails
+        if RegExMatch(response, '"content":"(.*?)(?<!\\)"', &match) {
+            val := match[1]
+            val := StrReplace(val, '\"', '"')
+            val := StrReplace(val, '\n', '`n')
+            A_Clipboard := val
+            Sleep(500)
+            Send("^v")
+        }
+    }
+}
+
+JSON_Stringify(str) {
+    str := StrReplace(str, "\", "\\")
+    str := StrReplace(str, '"', '\"')
+    str := StrReplace(str, "`n", "\n")
+    str := StrReplace(str, "`r", "\r")
+    str := StrReplace(str, "`t", "\t")
+    return '"' . str . '"'
+}
+
++!r::Reload
+```
+
+<img src="setup hotkey1.png" width="500" alt="AutoHotkey script setup">
+<img src="setup hotkey2.png" width="500" alt="AutoHotkey hotkey setup">
+
+### Auto-start on Boot
+
+1. Right-click your `.ahk` file → **Create Shortcut**
+2. Press `Win + R`, type `shell:startup`, press Enter
+3. Move the shortcut into the folder
+
+Now the script will run automatically on every Windows startup.
+
 ## Deployment
 
 The project includes `passenger_wsgi.py` for Phusion Passenger deployments (cPanel, shared hosting). Set `application` as the WSGI entry point in Passenger.
