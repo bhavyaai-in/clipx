@@ -193,11 +193,6 @@ Download and install [AutoHotkey v2](https://www.autohotkey.com/download/).
 Create a new script (`clipx.ahk`), right-click it and choose **Edit Script**, then paste:
 
 ```autohotkey
-if not A_IsAdmin
-{
-   Run "*RunAs" A_ScriptFullPath
-   ExitApp
-}
 
 #Requires AutoHotkey v2.0
 #SingleInstance Force
