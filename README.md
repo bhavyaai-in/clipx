@@ -150,7 +150,7 @@ Go to **System Settings → Keyboard → Keyboard Shortcuts → Services** and a
 
 ### ClipX Push (Clipboard → Server)
 
-![ClipX Push iPhone](clipx-push-iphone.png)
+<img src="clipx-push-iphone.png" width="300" alt="ClipX Push iPhone">
 
 1. Open **Shortcuts** app, tap `+` to create a new shortcut
 2. Add action: **Get Clipboard**
@@ -164,7 +164,7 @@ Go to **System Settings → Keyboard → Keyboard Shortcuts → Services** and a
 
 ### ClipX Pull (Server → Clipboard)
 
-![ClipX Pull iPhone](clipx-pull-iphone.png)
+<img src="clipx-pull-iphone.png" width="300" alt="ClipX Pull iPhone">
 
 1. Create a new shortcut with **Get Contents of URL**
    - URL: `https://your-domain.com/v1/clips?limit=1`
