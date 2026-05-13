@@ -31,7 +31,7 @@ POST   /v1/admin/login   Admin login
 ## Quick Start
 
 ```bash
-git clone https://github.com/rjamitsharma/clipx.git
+git clone https://github.com/bhavyaai-in/clipx.git
 cd clipx
 
 cp .env.example .env
@@ -302,4 +302,4 @@ The project includes `passenger_wsgi.py` for Phusion Passenger deployments (cPan
 
 ## License
 
-MIT © rjamitsharma
+MIT © bhavyaai-in
