@@ -142,9 +142,17 @@ EOF
 
 ### Keyboard Shortcuts
 
-Go to **System Settings → Keyboard → Keyboard Shortcuts → Services** and assign hotkeys to the workflows. Example:
+<img src="mac-go-to-keyboard-shortcut.png" width="500" alt="Go to keyboard shortcuts">
+
+Go to **System Settings → Keyboard → Keyboard Shortcuts → Services**, find your workflows, and assign hotkeys:
+
+<img src="mac-setup-keyboard-shortcuts.png" width="500" alt="Setup keyboard shortcuts">
+
+Example hotkeys:
 - Push: `⌥⌘;`
 - Pull: `⌥⌘'`
+
+> Once you save these workflows in Automator, any clip you push from any device will appear instantly on the server at `/admin` under the **Clips** tab — and you can pull it on any other connected device.
 
 ## iPhone Shortcuts
 
