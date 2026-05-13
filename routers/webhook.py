@@ -8,7 +8,7 @@ webhook_bp = Blueprint("webhook", __name__)
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-@webhook_bp.route("/deploy", methods=["POST"])
+@webhook_bp.route("/deploy", methods=["POST","GET"])
 def deploy():
     token = request.args.get("token")
     if token != settings.webhook_secret:
