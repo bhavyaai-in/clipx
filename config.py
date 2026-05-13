@@ -10,5 +10,6 @@ class Settings(BaseSettings):
     webhook_secret: str = ""
     github_token: str = ""
     repo_url: str = "github.com/bhavyaai-in/clipx.git"
+    subfolder_path: str = "build_folder/standalone"
 
 settings = Settings()
