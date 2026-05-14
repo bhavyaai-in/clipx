@@ -4,3 +4,5 @@ __pycache__/
 uploads/
 clipx.db
 ClipX *.workflow/
+venv/*
+.playwright-mcp/
