@@ -13,4 +13,7 @@ class Settings(BaseSettings):
     repo_path: str = "/home2/bhavyaai/public_html/bbhavyaai.com"
     subfolder_path: str = "build_folder/standalone"
 
+    class Config:
+        env_file = ".env"
+
 settings = Settings()
