@@ -303,3 +303,11 @@ The project includes `passenger_wsgi.py` for Phusion Passenger deployments (cPan
 ## License
 
 MIT © bhavyaai-in
+
+
+to run localy 
+
+python -c "
+import main
+main.app.run(host='0.0.0.0', port=5002, debug=True)
+"
