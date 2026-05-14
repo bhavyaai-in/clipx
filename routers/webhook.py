@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify
 from config import settings
 
 webhook_bp = Blueprint("webhook", __name__)
-LIVE_DIR = "/home2/bhavyaai/public_html/bhavyaai.com"
+LIVE_DIR = settings.repo_path
 
 
 @webhook_bp.route("/deploy", methods=["POST"])
@@ -47,7 +47,7 @@ def deploy():
 @webhook_bp.route("/git-reset-force", methods=["GET"])
 def git_reset_force():
     # Aapki repository ka path (jahan .git folder hai)
-    repo_path = "/home2/bhavyaai/public_html/bhavyaai.com"
+    repo_path = settings.repo_path
     
     try:
         # 1. Pehle us folder mein jao
