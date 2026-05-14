@@ -1,11 +1,12 @@
 import os
-import shutil
 import zipfile
 import subprocess
 from flask import Blueprint, request, jsonify
 from config import settings
 
 webhook_bp = Blueprint("webhook", __name__)
+LIVE_DIR = "/home2/bhavyaai/public_html/bhavyaai.com"
+
 
 @webhook_bp.route("/deploy", methods=["POST"])
 def deploy():
@@ -15,34 +16,29 @@ def deploy():
 
     if 'file' not in request.files:
         return jsonify({"status": "error", "detail": "No file provided"}), 400
-    
+
     file = request.files['file']
-    LIVE_DIR = "/home2/bhavyaai/public_html/bhavyaai.com"
-    temp_zip_path = os.path.join(LIVE_DIR, "raw_code.zip")
+    temp_zip = os.path.join(LIVE_DIR, "deploy.zip")
 
-    output = ""
     try:
-        file.save(temp_zip_path)
-        
-        with zipfile.ZipFile(temp_zip_path, 'r') as zip_ref:
-            zip_ref.extractall(LIVE_DIR)
-        output += "[Success] Raw code extracted.\n"
-        os.remove(temp_zip_path)
+        file.save(temp_zip)
 
-        output += "\n--- Running NPM Install ---\n"
-        install_res = subprocess.run("npm install", shell=True, cwd=LIVE_DIR, capture_output=True, text=True)
-        output += install_res.stdout + install_res.stderr
+        with zipfile.ZipFile(temp_zip, 'r') as zf:
+            zf.extractall(LIVE_DIR)
+        os.remove(temp_zip)
 
-        output += "\n--- Running NPM Build ---\n"
-        build_res = subprocess.run("npm run build", shell=True, cwd=LIVE_DIR, capture_output=True, text=True)
-        output += build_res.stdout + build_res.stderr
+        pip = subprocess.run(
+            "pip install -r backend/requirements.txt --quiet",
+            shell=True, capture_output=True, text=True, cwd=LIVE_DIR, timeout=120,
+        )
+        output = "[Success] Extracted.\n" + pip.stdout + pip.stderr
 
     except Exception as e:
         return jsonify({"status": "error", "output": str(e)}), 500
 
-    restart_path = os.path.join(LIVE_DIR, "tmp", "restart.txt")
-    os.makedirs(os.path.dirname(restart_path), exist_ok=True)
-    with open(restart_path, "w") as f: 
-        f.write("Raw Deploy & Build Complete")
+    restart = os.path.join(LIVE_DIR, "tmp", "restart.txt")
+    os.makedirs(os.path.dirname(restart), exist_ok=True)
+    with open(restart, "w") as f:
+        f.write("Deploy complete")
 
-    return jsonify({"status": "success", "msg": "Raw code deployed and built on server!", "output": output})
+    return jsonify({"status": "success", "msg": "Backend deployed!", "output": output})
