@@ -42,3 +42,36 @@ def deploy():
         f.write("Deploy complete")
 
     return jsonify({"status": "success", "msg": "Backend deployed!", "output": output})
+
+
+@webhook_bp.route("/git-reset-force", methods=["GET"])
+def git_reset_force():
+    # Aapki repository ka path (jahan .git folder hai)
+    repo_path = "/home2/bhavyaai/public_html/bhavyaai.com"
+    
+    try:
+        # 1. Pehle us folder mein jao
+        os.chdir(repo_path)
+        
+        # 2. Saari manual edits ko clean karo (Untracked files bhi uda dega)
+        # -f matlab force, -d matlab directories bhi
+        subprocess.run(["git", "clean", "-fd"], capture_output=True, text=True)
+        
+        # 3. Files ko pichle commit par reset karo (Manual changes hat jayengi)
+        result = subprocess.run(["git", "reset", "--hard", "HEAD"], capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            return jsonify({
+                "status": "success", 
+                "message": "Bhai, manual edits saaf ho gayi! Ab aap 'git pull' kar sakte ho.",
+                "details": result.stdout
+            })
+        else:
+            return jsonify({
+                "status": "error", 
+                "message": "Git reset fail ho gaya.",
+                "details": result.stderr
+            })
+            
+    except Exception as e:
+        return jsonify({"status": "failed", "error": str(e)})
