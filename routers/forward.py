@@ -1,9 +1,17 @@
 import logging
+import os
 import requests as http_requests
-from flask import Blueprint, request, Response, jsonify, current_app
+from flask import Blueprint, request, Response, jsonify
 
 forward_bp = Blueprint("forward", __name__)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("rqfarward")
+
+if not logger.handlers:
+    logger.setLevel(logging.INFO)
+    log_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "forward.log")
+    handler = logging.FileHandler(log_path)
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+    logger.addHandler(handler)
 
 HOP_BY_HOP = {
     "host", "content-length", "transfer-encoding", "connection",
