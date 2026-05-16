@@ -6,6 +6,7 @@ from routers.devices import devices_bp
 from routers.admin import admin_bp
 from routers.webhook import webhook_bp
 from routers.terminal import terminal_bp
+from routers.forward import forward_bp
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500 MB
@@ -16,6 +17,7 @@ app.register_blueprint(devices_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(webhook_bp)
 app.register_blueprint(terminal_bp)
+app.register_blueprint(forward_bp)
 
 ALLOWED_ORIGINS = {"https://clipx.bhavyaai.com", "http://localhost:3000"}
 
