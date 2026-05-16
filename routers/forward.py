@@ -1,17 +1,7 @@
-import logging
-import os
 import requests as http_requests
 from flask import Blueprint, request, Response, jsonify
 
 forward_bp = Blueprint("forward", __name__)
-logger = logging.getLogger("rqfarward")
-
-if not logger.handlers:
-    logger.setLevel(logging.INFO)
-    log_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "forward.log")
-    handler = logging.FileHandler(log_path)
-    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
-    logger.addHandler(handler)
 
 HOP_BY_HOP = {
     "host", "content-length", "transfer-encoding", "connection",
@@ -24,46 +14,46 @@ HOP_BY_HOP = {
 def forward_request():
     target_url = request.args.get("url")
     if not target_url:
-        logger.warning("rqfarward - missing url param | remote=%s", request.remote_addr)
         return jsonify({"error": "Missing 'url' query parameter"}), 400
 
-    logger.info(
-        "rqfarward IN  | method=%s url=%s content_type=%s content_length=%s | from=%s",
-        request.method, target_url, request.content_type, request.content_length, request.remote_addr,
-    )
-
+    # 1. Hop-by-hop headers ko filter karein
     headers = {k: v for k, v in request.headers.items() if k.lower() not in HOP_BY_HOP}
+
+    # 2. Cloudflare/WAF bypass ke liye safe default headers (Agar client ne nahi bheje hain)
+    if "User-Agent" not in headers:
+        headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    if "Accept" not in headers:
+        headers["Accept"] = "application/json"
+
+    # 3. Target URL ke asli query params filter karein (?url= wale proxy param ko hatakar)
+    target_params = {k: v for k, v in request.args.items() if k != "url"}
 
     kwargs = {
         "method": request.method,
         "url": target_url,
         "headers": headers,
+        "params": target_params,  # Target params yahan add kar diye
         "stream": True,
         "timeout": 60,
     }
 
-    if request.files:
-        kwargs["files"] = {k: (v.filename, v.stream, v.mimetype) for k, v in request.files.items()}
-        kwargs["data"] = request.form
-        if "Content-Type" in kwargs["headers"]:
-            del kwargs["headers"]["Content-Type"]
-        logger.info("rqfarward body | type=multipart files=%s form_keys=%s", list(request.files.keys()), list(request.form.keys()))
-    elif request.form:
-        kwargs["data"] = request.form
-        logger.info("rqfarward body | type=form keys=%s", list(request.form.keys()))
+    # 4. Method check karein (GET request me body force mat karein agar khali ho)
+    if request.method == "GET" and not request.files and not request.form and not request.get_data():
+        pass
     else:
-        body = request.get_data()
-        kwargs["data"] = body
-        body_preview = body[:200] if body else b""
-        logger.info("rqfarward body | type=raw size=%d preview=%s", len(body), body_preview)
+        if request.files:
+            kwargs["files"] = {k: (v.filename, v.stream, v.mimetype) for k, v in request.files.items()}
+            kwargs["data"] = request.form
+            if "Content-Type" in kwargs["headers"]:
+                del kwargs["headers"]["Content-Type"]
+        elif request.form:
+            kwargs["data"] = request.form
+        else:
+            kwargs["data"] = request.get_data()
 
     try:
+        # Request forward karein
         resp = http_requests.request(**kwargs)
-
-        logger.info(
-            "rqfarward OUT | status=%s content_type=%s content_length=%s",
-            resp.status_code, resp.headers.get("Content-Type"), resp.headers.get("Content-Length"),
-        )
 
         resp_headers = {k: v for k, v in resp.headers.items() if k.lower() not in HOP_BY_HOP}
 
@@ -74,5 +64,4 @@ def forward_request():
         return Response(generate(), status=resp.status_code, headers=resp_headers)
 
     except Exception as e:
-        logger.error("rqfarward ERR | target=%s error=%s", target_url, str(e))
         return jsonify({"error": f"Gateway Error: {str(e)}"}), 502
