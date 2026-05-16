@@ -10,12 +10,11 @@ HOP_BY_HOP = {
 }
 
 
-@forward_bp.route("/rqfarward/<path:target_url>", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "TRACE"])
-def forward_request(target_url):
-    if target_url.startswith("http:/") and not target_url.startswith("http://"):
-        target_url = target_url.replace("http:/", "http://", 1)
-    elif target_url.startswith("https:/") and not target_url.startswith("https://"):
-        target_url = target_url.replace("https:/", "https://", 1)
+@forward_bp.route("/rqfarward", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "TRACE"])
+def forward_request():
+    target_url = request.args.get("url")
+    if not target_url:
+        return jsonify({"error": "Missing 'url' query parameter"}), 400
 
     headers = {k: v for k, v in request.headers.items() if k.lower() not in HOP_BY_HOP}
 
@@ -23,7 +22,6 @@ def forward_request(target_url):
         "method": request.method,
         "url": target_url,
         "headers": headers,
-        "params": request.args,
         "stream": True,
         "timeout": 60,
     }
